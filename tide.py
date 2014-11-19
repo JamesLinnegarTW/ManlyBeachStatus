@@ -33,7 +33,7 @@ def tides(high_tide, low_tide):
     lcd.setCursor(0,1)
     lcd.message("L: %s" % low_tide)
 
-def temperature(air_temp, sea_temp)
+def temperature(air_temp, sea_temp):
     clear()
     lcd.setCursor(0,0)
     lcd.message("Air: %sc" % air_temp)
