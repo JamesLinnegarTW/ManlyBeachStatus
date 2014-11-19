@@ -36,9 +36,9 @@ def tides(high_tide, low_tide):
 def temperature(air_temp, sea_temp):
     clear()
     lcd.setCursor(0,0)
-    lcd.message("Air: %sc" % air_temp)
+    lcd.message("Air temp: %sc" % air_temp)
     lcd.setCursor(0,1)
-    lcd.message("Sea: %sc" % sea_temp)
+    lcd.message("Sea temp: %sc" % sea_temp)
 
 while 1:
     beach_data = getData()
@@ -48,9 +48,10 @@ while 1:
     clear()
     for beach in beach_data.entries:
        if(beach.title == "Little Manly Cove"):
-#           tides(high_tide, low_tide)
+           tides(high_tide, low_tide)
+           sleep(5)
            temperature(air_temperature, sea_temperature)
-    sleep(5)
+           sleep(5)
 
 
 #while 1:
