@@ -4,8 +4,6 @@ from Adafruit_CharLCD import Adafruit_CharLCD
 
 from time import sleep
 
-lcd = Adafruit_CharLCD()
-lcd.begin(16, 2)
 
 def getData():
     data = feedparser.parse('http://www.environment.nsw.gov.au/beachapp/SydneyBulletin.xml')
@@ -21,7 +19,6 @@ def getTemperatures(data):
     air_temperature =  data['channel']['bw_airtemp']
     sea_temperature =  data['channel']['bw_oceantemp']
     return air_temperature, sea_temperature
-
 
 def clear():
     lcd.clear()
@@ -40,23 +37,30 @@ def temperature(air_temp, sea_temp):
     lcd.setCursor(0,1)
     lcd.message("Sea temp: %sc" % sea_temp)
 
-while 1:
-    beach_data = getData()
-    high_tide, low_tide = getTides(beach_data)
-    air_temperature, sea_temperature = getTemperatures(beach_data);
+try:
+    lcd = Adafruit_CharLCD(25, 24, [23, 17, 27, 22], GPIO)
+    lcd.begin(16, 2)
 
+    while 1:
+        beach_data = getData()
+        high_tide, low_tide = getTides(beach_data)
+        air_temperature, sea_temperature = getTemperatures(beach_data);
+
+        clear()
+        for beach in beach_data.entries:
+           if(beach.title == "Little Manly Cove"):
+               tides(high_tide, low_tide)
+               sleep(5)
+               temperature(air_temperature, sea_temperature)
+               sleep(5)
+
+
+except KeyboardInterrupt:
+    # here you put any code you want to run before the program
+    # exits when you press CTRL+C
     clear()
-    for beach in beach_data.entries:
-       if(beach.title == "Little Manly Cove"):
-           tides(high_tide, low_tide)
-           sleep(5)
-           temperature(air_temperature, sea_temperature)
-           sleep(5)
 
-
-#while 1:
-#    lcd.clear()
-#    lcd.message('Hello world')
-#    sleep(2)
+finally:
+    GPIO.cleanup()
 
 
