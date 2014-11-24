@@ -1,10 +1,41 @@
 import feedparser
 from time import sleep
 
-text_length_to_display = 16
 i = 0;
 displays = []
-display_index = 0;
+screen_index = 0
+
+class Display():
+
+	def __init__(self):
+		self.index = 0
+
+	def draw(self, title, detail):
+
+		print chr(27) + "[2J"
+		self.render_title(title)
+		animating_data = self.render_detail(detail)
+		return animating_data
+
+	def render_title(self, title):
+		print title  + ":" + (" " * (15 - len(title)))
+
+	def render_detail(self, detail):
+		if(len(detail)<=16):
+			print detail + (" " * (16 - len(detail)))
+			return {'animating':False,'next_screen':True}
+		else:
+			if(self.index > (len(detail)+16)):
+				self.index = 0
+				print ""
+				return {'animating':True,'next_screen':True}
+
+			else:
+				text_buffer = (" " * 16) + detail + (" " * 16)
+				print text_buffer[self.index:self.index+16]
+				self.index = self.index + 1
+				return {'animating':True,'next_screen':False}
+
 
 def formatMetres(data):
 	return data.replace(" metres" , "m").replace(" metre" , "m")
@@ -18,74 +49,8 @@ def addScreen(title, text):
 	data_dict = {'title': title, 'text': text}
 	displays.append(data_dict)
 
-
-def renderScreen(title, text):
-	_title = render_title(title)
-	_text = render_detail(text)
-
-	print chr(27) + "[2J"
-	print _title
-	print _text['text']
-
-	return _text['wait']
-
-
-def render_title(title):
-	return title  + ":" + (" " * (15 - len(title)))
-
-def render_detail(text):
-	render_text = False
-	sleep = 0
-	if(len(text)<=16):
-		render_text = text + (" " * (16 - len(text)))
-		sleep = 2
-	else:
-		render_text = buffer_scroll(text)
-		if(render_text == False):
-			sleep = -1
-		else:
-			sleep = 0.1
-
-	return {'text' : render_text, 'wait' : sleep}
-
-
-def buffer_scroll(text):
-	global i
-
-	if(i > (len(text)+16)):
-		i = 0
-		render_text = False
-	else:
-
-		text_buffer = (" " * 16) + text + (" " * 16)
-		render_text = text_buffer[i:i+16]
-
-	i = i + 1
-
-	return render_text
-
-
-
-def draw():
-	global display_index
-
-	screen_data = displays[display_index]
-	wait_interval = renderScreen(screen_data['title'],formatMetres(screen_data['text']))
-
-	if(wait_interval < 0):
-		display_index = display_index + 1
-		wait_interval = 0
-
-	if(wait_interval > 1):
-		display_index = display_index + 1
-
-	if(display_index >= len(displays)):
-		display_index = 0
-
-	sleep(wait_interval)
-
 def get_data():
-	clear_screens()
+	print "getting data"
 	data = feedparser.parse('http://www.environment.nsw.gov.au/beachapp/SydneyBulletin.xml')
 
 	for beach_data in data.entries:
@@ -104,10 +69,31 @@ def get_data():
 			addScreen("Stars", beach_data['bw_starrating'])
 
 try:
+
 	get_data()
+	print displays
+	print screen_index
+	sleep(2)
+	display = Display()
+
 
 	while (1):
-		draw()
+
+		screen_data = displays[screen_index]
+		animating_data = display.draw(screen_data['title'], screen_data['text'])
+
+		if(animating_data['animating']):
+			sleep(0.1)
+			if(animating_data['next_screen']):
+				screen_index = screen_index + 1
+		else:
+				sleep(2)
+				screen_index = screen_index + 1
+
+		if(screen_index >= len(displays)):
+			screen_index = 0
+
+
 
 except KeyboardInterrupt:
 	print "exiting"
