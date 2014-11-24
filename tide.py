@@ -1,6 +1,6 @@
 import feedparser
 import RPi.GPIO as GPIO
-from Adafruit_CharLCD import Adafruit_CharLCD
+from CharLCD import CharLCD
 
 from time import sleep
 
