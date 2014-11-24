@@ -9,17 +9,6 @@ display_index = 0;
 def formatMetres(data):
 	return data.replace(" metres" , "m").replace(" metre" , "m")
 
-class Beach:
-	def __init__(self, name, advice, high_tide, low_tide):
-		self.name = name
-		self.advice = advice
-		self.high_tide = high_tide
-		self.low_tide = low_tide
-
-	def displayName(self):
-		print "Name: %s" % self.name
-
-
 def printStringToLines(text):
 
 	words = text.split(" ");
@@ -54,65 +43,87 @@ for beach_data in data.entries:
 	if(beach_data.title == "Little Manly Cove"):
 		print ""
 		addScreen("Beach", beach_data.title)
+		addScreen("High tide", formatMetres(data['channel']['bw_hightide']))
+		addScreen("Low tide" , formatMetres(data['channel']['bw_lowtide']))
+		addScreen("Air temp" , data['channel']['bw_airtemp'] + 'C')
+		addScreen("Ocean temp" , data['channel']['bw_oceantemp']+'C')
+		addScreen("Swell", formatMetres(data['channel']['bw_swell']))
+		addScreen("Rain", formatMetres(data['channel']['bw_rainfall']))
+		addScreen("Weather", data['channel']['bw_weather'])
+		addScreen("Winds", data['channel']['bw_winds'])
 		addScreen("Advice", beach_data['bw_advice'])
 		addScreen("Stars", beach_data['bw_starrating'])
-		#display_text = renderText(display_text, beach_data['bw_bsgcomment'])
 
 
-addScreen("High tide", formatMetres(data['channel']['bw_hightide']))
-addScreen("Low tide" , formatMetres(data['channel']['bw_lowtide']))
-addScreen("Air temp" , data['channel']['bw_airtemp'] + 'C')
-addScreen("Ocean temp" , data['channel']['bw_oceantemp']+'C')
-addScreen("Swell", formatMetres(data['channel']['bw_swell']))
-addScreen("Rain", formatMetres(data['channel']['bw_rainfall']))
-addScreen("Weather", data['channel']['bw_weather'])
-addScreen("Winds", data['channel']['bw_winds'])
+
 
 
 
 def renderScreen(title, text):
-	ended = False
-	print "-" * 18
-	print "|" + title  + ":" + (" " * (15 - len(title))) + "|"
+	render_title = title  + ":" + (" " * (15 - len(title)))
+	render_text = render_detail(text)
+
+	print render_title
+	print render_text[0]
+
+	return render_text[1]
+
+
+
+def render_detail(text):
+	render_text = False
+	sleep = 0
 	if(len(text)<=16):
-		print  "|" + text + (" " * (16 - len(text)))+ "|"
-		print "-" * 18
-		sleep(2)
-		ended = True
+		render_text = text + (" " * (16 - len(text)))
+		sleep = 2
 	else:
-		ended = buffer_scroll(text)
-		print "-" * 18
-	return ended
+		render_text = buffer_scroll(text)
+		if(render_text == False):
+			sleep = -1
+		else:
+			sleep = 0.1
+
+	return [render_text, sleep]
+
 
 def buffer_scroll(text):
 	global i
 
-	ended = False
-
 	if(i > (len(text)+16)):
 		i = 0
-		ended = True
+		render_text = False
+	else:
 
-	text_buffer = (" " * 16) + text + (" " * 16)
+		text_buffer = (" " * 16) + text + (" " * 16)
+		render_text = text_buffer[i:i+16]
 
-	print "|" + text_buffer[i:i+16] + "|"
 	i = i + 1
 
-	return ended
+	return render_text
 
 i = 0;
 
-animation_end = False
+def draw():
+	global display_index
 
-while (1):
 	print chr(27) + "[2J"
+
 	screen_data = displays[display_index]
-	print screen_data
-	animation_end = renderScreen(screen_data['title'],formatMetres(screen_data['text']))
-	if(animation_end):
+
+	wait_interval = renderScreen(screen_data['title'],formatMetres(screen_data['text']))
+
+	if(wait_interval < 0):
 		display_index = display_index + 1
+		wait_interval = 0
+	if(wait_interval > 1):
+		display_index = display_index + 1
+
 	if(display_index >= len(displays)):
 		display_index = 0
 
-	sleep(0.1)
+	sleep(wait_interval)
+
+while (1):
+	draw()
+
 
